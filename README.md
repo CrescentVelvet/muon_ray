@@ -6,7 +6,7 @@ A software for collecting and analyzing decay lifetime and energy of muons from 
 Author: X.W. Chen; Y.F. Wang
 Zhejiang University
 
-Connect us: 3170104952@zju.edu.cn
+Connect us: crescentvelvet3@gmail.com
 
 Running environment:
 

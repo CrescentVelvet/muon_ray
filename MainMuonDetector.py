@@ -591,6 +591,8 @@ class Analysis(QtCore.QThread):
                         indexes = peakutils.indexes(y, thres=0.2, min_dist=20)
 
                         for num in range(1,257):
+                            if indexes.size == 0:
+                                break
                             if y[indexes[0]] < 0.04:
                                 unimodal_moun[0] += 1
                             elif 0.04*num <= y[indexes[0]] <= 0.04*(num+1):
@@ -604,6 +606,7 @@ class Analysis(QtCore.QThread):
 
                         if (len(indexes) >= 2 and y[int((indexes[0] + indexes[1]) / 2)] < (0.9 * min(y[indexes[0]], y[indexes[1]])) and y[indexes[0]] == max(y[indexes])):
                             indexes = np.delete(indexes, range(2, len(indexes)))
+                            print(str(i))
                             print(indexes)
                             #self.save_img.emit(x, y, i, indexes)
 

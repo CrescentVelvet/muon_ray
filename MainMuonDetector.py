@@ -2,7 +2,7 @@
 Author: Chen Xianwei & WnagYufeng
 Zhejiang University, Hangzhou, China
 Date: 2019/01/05
-Version: V 1.0
+Version: V 1.1
 
 """
 from __future__ import with_statement
@@ -20,6 +20,10 @@ import peakutils
 from PyQt5.QtWidgets import QMessageBox
 import time
 import asyncio
+from tkinter import *  
+
+
+n = 0
 
 class DesignerMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
@@ -32,6 +36,7 @@ class DesignerMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # 主界面上的按钮触发执行与停止采集函数的进程
         self.selectButton.clicked.connect(self.Start_to_do_something)
         self.stopButton.clicked.connect(self.Start_to_do_nothing)
+        #
 
         # 主界面菜单栏上的帮助与更多选项跳转到信息介绍窗口
         self.tableWidget.cellClicked.connect(self.update_graph)
@@ -269,15 +274,19 @@ class DesignerMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print(d)
             bvals = d(a)
             plot1 = plt.plot(a, bvals, 'r', label = 'polyfit values')
+            plt.xticks([100,200,300,400,500],[Analysis.changeMent*100,Analysis.changeMent*200,Analysis.changeMent*300,Analysis.changeMent*400,Analysis.changeMent*500])
             plt.title(title)
             plt.xlabel('The power level of moun(V)')
             plt.ylabel('The number of moun')
+            #plt.legend()
+            #plt.show()
             plt.savefig(self.line_Directory.text() + '\\' + '1.1powerofMoun.png')
             plt.close()
 
     def save_qow(self, title, distribute):
 
         # 绘制并保存双峰μ子信号第二个峰幅值的能量统计直方图
+            
             plt.bar(range(len(distribute)), distribute)
 
         # 对直方图进行多项式函数曲线的拟合
@@ -288,17 +297,17 @@ class DesignerMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print(d)
             bvals = d(a)
             plot1 = plt.plot(a, bvals, 'r', label = 'polyfit values')
+            plt.xticks([100,200,300,400,500],[Analysis.changeMent*100,Analysis.changeMent*200,Analysis.changeMent*300,Analysis.changeMent*400,Analysis.changeMent*500])
             plt.title(title)
             plt.xlabel('The power level of elec(V)')
             plt.ylabel('The number of elec')
             plt.savefig(self.line_Directory.text() + '\\' + '3.1powerofElec.png')
-            plt.close()
+            plt.close()   
 
     def save_multi_pow(self, title, distribute):
 
         # 绘制并保存加入了权重后的双峰μ子信号第一个峰幅值的能量统计直方图
             plt.bar(range(len(distribute)), distribute)
-
         # 对直方图进行多项式函数曲线的拟合
             a = np.arange(0, len(distribute), 1)
             b = distribute
@@ -307,12 +316,13 @@ class DesignerMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print(d)
             bvals = d(a)
             plot1 = plt.plot(a, bvals, 'r', label = 'polyfit values')
+            plt.xticks([100,200,300,400,500],[Analysis.changeMent*100,Analysis.changeMent*200,Analysis.changeMent*300,Analysis.changeMent*400,Analysis.changeMent*500])
             plt.title(title)
             plt.xlabel('The multipower level of moun(V)')
             plt.ylabel('The number of moun')
             plt.savefig(self.line_Directory.text() + '\\' + '1.2multipowerofMoun.png')
             plt.close()
-
+    
     def save_multi_qow(self, title, distribute):
 
         # 绘制并保存加入了权重后的双峰μ子信号第二个峰幅值的能量统计直方图
@@ -325,6 +335,7 @@ class DesignerMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print(d)
             bvals = d(a)
             plot1 = plt.plot(a, bvals, 'r', label = 'polyfit values')
+            plt.xticks([100,200,300,400,500],[Analysis.changeMent*100,Analysis.changeMent*200,Analysis.changeMent*300,Analysis.changeMent*400,Analysis.changeMent*500])
             plt.title(title)
             plt.xlabel('The multipower level of elec(V)')
             plt.ylabel('The number of elec')
@@ -343,6 +354,7 @@ class DesignerMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print(d)
             bvals = d(a)
             plot1 = plt.plot(a, bvals, 'r', label = 'polyfit values')
+            plt.xticks([100,200,300,400,500],[Analysis.changeMent*100,Analysis.changeMent*200,Analysis.changeMent*300,Analysis.changeMent*400,Analysis.changeMent*500])
             plt.title(title)
             plt.xlabel('The power level of unimodal moun(V)')
             plt.ylabel('The number of unimodal moun')
@@ -361,6 +373,7 @@ class DesignerMainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             print(d)
             bvals = d(a)
             plot1 = plt.plot(a, bvals, 'r', label = 'polyfit values')
+            plt.xticks([100,200,300,400,500],[Analysis.changeMent*100,Analysis.changeMent*200,Analysis.changeMent*300,Analysis.changeMent*400,Analysis.changeMent*500])
             plt.title(title)
             plt.xlabel('The multipower level of unimodal moun(V)')
             plt.ylabel('The number of unimodal moun')
@@ -372,18 +385,24 @@ class Getthread(QtCore.QThread):
         # 直接从示波器获取线程
         _signal = QtCore.pyqtSignal(int)
         saving_signal = QtCore.pyqtSignal(list,  list,  int)
+        save_pow = QtCore.pyqtSignal(str, list)
         def __init__(self):
             super(Getthread,self).__init__()
             self.isgood = -1
         def Begin(self,  directory):
+            self.directory = directory
             self.wave = oscillator.The_wave(directory)
             self.start()
             return self.isgood
         def run(self):
-            n = 0
+            n=0
+            distribute_muon = [0]*520
+            ave_power = 0.0
+            num_of_moun = 0
             while Ui_MainWindow.stdo == 1:
                 n = n + 1
                 try:
+              
                     x,  y = self.wave.get_wave(dmw.peakthresholdbox.value(), dmw.peakthresholdbox_2.value(), dmw.triggerbox.value())
                 except:
                     self.quit()
@@ -391,9 +410,60 @@ class Getthread(QtCore.QThread):
                     return
                 else:
                     self.isgood = 0
-                    self.saving_signal.emit(x,  y,  n)
+                    self.saving_signal.emit(x,  y,  n) 
+                    filename = self.directory + '\\' + str(n) + ".txt"
+                    try:
+                        x = np.loadtxt(filename,  delimiter='\t',  usecols = (0,),  dtype = float)
+                        y = np.loadtxt(filename,  delimiter='\t',  usecols = (1,),  dtype = float)
+
+                    except IOError:
+                        continue
+
+                    else:
+                        y = np.fft.rfft(y)
+                        for j in range(len(y)):
+                            y[j] = -y[j]
+                            if abs(y[j]) < 30:
+                               y[j] = 0
+                        y = np.fft.irfft(y)
+                        indexes = peakutils.indexes(y, thres=0.2, min_dist=20)
+
+                        #indexes = np.delete(indexes, range(2, len(indexes)))
+                        #ave_power *= num_of_moun
+                        #num_of_moun += 1
+                        #ave_power += y[indexes[0]]
+                        #ave_power /= num_of_moun
+                        #if y[indexes[0]] < 0.02:
+                        #    distribute_muon[0] += 1
+                        #else:
+                        #    distribute_muon[int(y[indexes[0]]/0.02)] += 1
+                        #if (len(indexes) >= 2 and y[int((indexes[0] + indexes[1]) / 2)] < (0.9 * min(y[indexes[0]], y[indexes[1]])) and y[indexes[0]] == max(y[indexes])):
+                        if (len(indexes) >= 2 and 1 and y[indexes[0]] == max(y[indexes])):
+                            indexes = np.delete(indexes, range(2, len(indexes)))
+                            ave_power *= num_of_moun
+                            num_of_moun += 1
+                            ave_power += y[indexes[0]]
+                            ave_power /= num_of_moun
+                            if y[indexes[0]] < 0.02:
+                                distribute_muon[0] += 1
+                            else:
+                                distribute_muon[int(y[indexes[0]]/0.02)] += 1
+                        plt.ion()
+                        plt.bar(range(len(distribute_muon)), distribute_muon)
+                        plt.title('The number of moun is ' + str(num_of_moun) + '\n' + 'The average power of moun is ' + str(ave_power))
+                        plt.xlabel('The power level of moun(V)')
+                        plt.ylabel('The number of moun')
+                        #self.save_pow.emit('The number of moun is ' + str(num_of_moun) + '\n' + 'The average power of moun is ' + str(ave_power), distribute_muon)
+                        plt.pause(0.01)
 
 class Analysis(QtCore.QThread):
+
+        changeMent = 1.0
+
+        def changement(self):
+            Analysis.changeMent = float(self.energyVar.get())/float(self.numVar.get())
+            #Analysis.changeMent = 2.0
+            self.changeVar.set(format(Analysis.changeMent,"10.2f"))         
 
         #分析的线程
         #_signal = QtCore.pyqtSignal(int)
@@ -418,115 +488,13 @@ class Analysis(QtCore.QThread):
 
             # 定义256位的数组来存储多道分析的结果
             while Ui_MainWindow.stdo == 1:
-                distribute_lifetime = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                distribute_muon     = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                distribute_elec     = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                multichannel_muon   = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                multichannel_elec   = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                unimodal_moun       = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                multichannel_unimodal=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                distribute_lifetime = [0]*16
+                distribute_muon     = [0]*520
+                distribute_elec     = [0]*520
+                multichannel_muon   = [0]*520
+                multichannel_elec   = [0]*520
+                unimodal_moun       = [0]*520
+                multichannel_unimodal=[0]*520
 
                 # 双峰μ子寿命平均值初始化（双峰μ子信号两个峰的时间差）
                 ave_time  = 0.0
@@ -589,19 +557,24 @@ class Analysis(QtCore.QThread):
                         y = np.fft.irfft(y)
 
                         indexes = peakutils.indexes(y, thres=0.2, min_dist=20)
-
-                        for num in range(1,257):
-                            if indexes.size == 0:
-                                break
-                            if y[indexes[0]] < 0.04:
+                        if indexes.size > 0:
+                            if y[indexes[0]] < 0.02:
                                 unimodal_moun[0] += 1
-                            elif 0.04*num <= y[indexes[0]] <= 0.04*(num+1):
-                                unimodal_moun[num] += 1
                             else:
-                                pass
+                                unimodal_moun[int(y[indexes[0]]/0.02)] += 1
+
+                        #for num in range(1,513):
+                        #    if indexes.size == 0:
+                        #        break
+                        #    if y[indexes[0]] < 0.02:
+                        #        unimodal_moun[0] += 1
+                        #    elif 0.02*num <= y[indexes[0]] <= 0.02*(num+1):
+                        #        unimodal_moun[num] += 1
+                        #    else:
+                        #        pass
 
                             ave_unimodal += y[indexes[0]]
-
+                            
                         num_of_unimodal += 1
 
                         if (len(indexes) >= 2 and y[int((indexes[0] + indexes[1]) / 2)] < (0.9 * min(y[indexes[0]], y[indexes[1]])) and y[indexes[0]] == max(y[indexes])):
@@ -635,71 +608,90 @@ class Analysis(QtCore.QThread):
 
                             ave_time += x[indexes[1]] - x[indexes[0]]
 
-                            for num in range(1,257):
-                                if y[indexes[0]] < 0.1:
-                                    distribute_muon[0] += 1
-                                elif 0.04*num <= y[indexes[0]] < 0.04*(num+1):
-                                    distribute_muon[num] += 1
-                                else:
-                                    pass
+                            if y[indexes[0]] < 0.02:
+                                distribute_muon[0] += 1
+                            else:
+                                distribute_muon[int(y[indexes[0]]/0.02)] += 1
+
+                            #for num in range(1,513):
+                            #    if y[indexes[0]] < 0.02:
+                            #        distribute_muon[0] += 1
+                            #    elif 0.02*num <= y[indexes[0]] < 0.02*(num+1):
+                            #        distribute_muon[num] += 1
+                            #    else:
+                            #        pass
 
                             ave_power += y[indexes[0]]
 
-                            for num in range(1,257):
-                                if y[indexes[1]] < 0.04:
-                                    distribute_elec[0] += 1
-                                elif 0.04*num <= y[indexes[1]] < 0.04*(num+1):
-                                    distribute_elec[num] += 1
-                                else:
-                                    pass
+                            if y[indexes[1]] < 0.02:
+                                distribute_elec[0] += 1
+                            else:
+                                distribute_elec[int(y[indexes[1]]/0.02)] += 1
+
+                            #for num in range(1,513):
+                            #    if y[indexes[1]] < 0.02:
+                            #        distribute_elec[0] += 1
+                            #    elif 0.02*num <= y[indexes[1]] < 0.02*(num+1):
+                            #        distribute_elec[num] += 1
+                            #    else:
+                            #        pass
 
                             ave_qower += y[indexes[1]]
+                            #self.save_pow.emit('The number of moun is ' + str(num_of_moun) + '\n' + 'The average power of moun is ' + str(ave_power), distribute_muon)
 
-                            # 对双峰μ子信号中的第一个峰的幅值进行13731的权重加成
-                            for num in range(1,257):
-                                if num == 1:
-                                    multichannel_muon[num] = 7*distribute_muon[num]/15 + 3*distribute_muon[num+1]/15 + 1*distribute_muon[num+2]/15
-                                elif num == 2:
-                                    multichannel_muon[num] = 3*distribute_muon[num-1]/15 + 7*distribute_muon[num]/15 + 3*distribute_muon[num+1]/15 + 1*distribute_muon[num+2]/15
-                                elif num == 255:
-                                    multichannel_muon[num] = 1*distribute_muon[num-2] + 3*distribute_muon[num-1]/15 + 7*distribute_muon[num]/15 + 3*distribute_muon[num+1]/15
-                                elif num == 256:
-                                    multichannel_muon[num] = 1*distribute_muon[num-2] + 3*distribute_muon[num-1]/15 + 7*distribute_muon[num]/15
-                                else:
-                                    multichannel_muon[num] = 1*distribute_muon[num-2] + 3*distribute_muon[num-1]/15 + 7*distribute_muon[num]/15 + 3*distribute_muon[num+1]/15 + 1*distribute_muon[num+2]/15
-                            # 能量均值取加权之前的均值
-                            ave_multi_power = ave_power
+                # 对双峰μ子信号中的第一个峰的幅值进行13731的权重加成
+                for num in range(1,513):
+                    if num == 1:
+                        multichannel_muon[num] = 69*distribute_muon[num]/70 + 4*distribute_muon[num+1]/70 + (-6)*distribute_muon[num+2]/70 + 4*distribute_muon[num+3]/70 + (-1)*distribute_muon[num+4]/70
+                    elif num == 2:
+                        multichannel_muon[num] = 2*distribute_muon[num-1]/35 + 27*distribute_muon[num]/35 + 12*distribute_muon[num+1]/35 + (-8)*distribute_muon[num+2]/35 + 2*distribute_muon[num+3]/35
+                    elif num == 511:
+                        multichannel_muon[num] = 2*distribute_muon[num+1]/35 + 27*distribute_muon[num]/35 + 12*distribute_muon[num-1]/35 + (-8)*distribute_muon[num-2]/35 + 2*distribute_muon[num-3]/35
+                    elif num == 512:
+                        multichannel_muon[num] = 69*distribute_muon[num]/70 + 4*distribute_muon[num-1]/70 + (-6)*distribute_muon[num-2]/70 + 4*distribute_muon[num-3]/70 + (-1)*distribute_muon[num-4]/70
+                    else:
+                        multichannel_muon[num] = (-3)*distribute_muon[num-2]/35 + 12*distribute_muon[num-1]/35 + 17*distribute_muon[num]/35 + 12*distribute_muon[num+1]/35 + (-3)*distribute_muon[num+2]/35
+                # 能量均值取加权之前的均值
+                #ave_multi_power = ave_power
+                
 
-                            # 对双峰μ子信号中的第二个峰的幅值进行13731的权重加成
-                            for num in range(1,257):
-                                if num == 1:
-                                    multichannel_elec[num] = 7*distribute_elec[num]/15 + 3*distribute_elec[num+1]/15 + 1*distribute_elec[num+2]/15
-                                elif num == 2:
-                                    multichannel_elec[num] = 3*distribute_elec[num-1]/15 + 7*distribute_elec[num]/15 + 3*distribute_elec[num+1]/15 + 1*distribute_elec[num+2]/15
-                                elif num == 255:
-                                    multichannel_elec[num] = 1*distribute_elec[num-2] + 3*distribute_elec[num-1]/15 + 7*distribute_elec[num]/15 + 3*distribute_elec[num+1]/15
-                                elif num == 256:
-                                    multichannel_elec[num] = 1*distribute_elec[num-2] + 3*distribute_elec[num-1]/15 + 7*distribute_elec[num]/15
-                                else:
-                                    multichannel_elec[num] = 1*distribute_elec[num-2] + 3*distribute_elec[num-1]/15 + 7*distribute_elec[num]/15 + 3*distribute_elec[num+1]/15 + 1*distribute_elec[num+2]/15
-                            # 能量均值取加权之前的均值
-                            ave_multi_qower = ave_qower
+                # 对双峰μ子信号中的第二个峰的幅值进行13731的权重加成
+                for num in range(1,513):
+                    if num == 1:
+                        multichannel_elec[num] = 69*distribute_elec[num]/70 + 4*distribute_elec[num+1]/70 + (-6)*distribute_elec[num+2]/70 + 4*distribute_elec[num+3]/70 + (-1)*distribute_elec[num+4]/70
+                    elif num == 2:
+                        multichannel_elec[num] = 2*distribute_elec[num-1]/35 + 27*distribute_elec[num]/35 + 12*distribute_elec[num+1]/35 + (-8)*distribute_elec[num+2]/35 + 2*distribute_elec[num+3]/35
+                    elif num == 511:
+                        multichannel_elec[num] = 2*distribute_elec[num+1]/35 + 27*distribute_elec[num]/35 + 12*distribute_elec[num-1]/35 + (-8)*distribute_elec[num-2]/35 + 2*distribute_elec[num-3]/35
+                    elif num == 512:
+                        multichannel_elec[num] = 69*distribute_elec[num]/70 + 4*distribute_elec[num-1]/70 + (-6)*distribute_elec[num-2]/70 + 4*distribute_elec[num-3]/70 + (-1)*distribute_elec[num-4]/70
+                    else:
+                        multichannel_elec[num] = (-3)*distribute_elec[num-2]/35 + 12*distribute_elec[num-1]/35 + 17*distribute_elec[num]/35 + 12*distribute_elec[num+1]/35 + (-3)*distribute_elec[num+2]/35
+                # 能量均值取加权之前的均值
+                #ave_multi_qower = ave_qower
+                
 
-                            # 对单峰与双峰μ子信号中的第一个峰的幅值进行13731的权重加成
-                            for num in range(1,257):
-                                if num == 1:
-                                    multichannel_unimodal[num] = 7*unimodal_moun[num]/15 + 3*unimodal_moun[num+1]/15 + 1*unimodal_moun[num+2]/15
-                                elif num == 2:
-                                    multichannel_unimodal[num] = 3*unimodal_moun[num-1]/15 + 7*unimodal_moun[num]/15 + 3*unimodal_moun[num+1]/15 + 1*unimodal_moun[num+2]/15
-                                elif num == 255:
-                                    multichannel_unimodal[num] = 1*unimodal_moun[num-2] + 3*unimodal_moun[num-1]/15 + 7*unimodal_moun[num]/15 + 3*unimodal_moun[num+1]/15
-                                elif num == 256:
-                                    multichannel_unimodal[num] = 1*unimodal_moun[num-2] + 3*unimodal_moun[num-1]/15 + 7*unimodal_moun[num]/15
-                                else:
-                                    multichannel_unimodal[num] = 1*unimodal_moun[num-2] + 3*unimodal_moun[num-1]/15 + 7*unimodal_moun[num]/15 + 3*unimodal_moun[num+1]/15 + 1*unimodal_moun[num+2]/15
-                            # 能量均值取加权之前的均值
-                            ave_multi_unimodal = ave_unimodal
-
+                # 对单峰与双峰μ子信号中的第一个峰的幅值进行13731的权重加成
+                for num in range(1,513):
+                    if num == 1:
+                        multichannel_unimodal[num] = 69*unimodal_moun[num]/70 + 4*unimodal_moun[num+1]/70 + (-6)*unimodal_moun[num+2]/70 + 4*unimodal_moun[num+3]/70 + (-1)*unimodal_moun[num+4]/70
+                    elif num == 2:
+                        multichannel_unimodal[num] = 2*unimodal_moun[num-1]/35 + 27*unimodal_moun[num]/35 + 12*unimodal_moun[num+1]/35 + (-8)*unimodal_moun[num+2]/35 + 2*unimodal_moun[num+3]/35
+                    elif num == 511:
+                        multichannel_unimodal[num] = 2*unimodal_moun[num+1]/35 + 27*unimodal_moun[num]/35 + 12*unimodal_moun[num-1]/35 + (-8)*unimodal_moun[num-2]/35 + 2*unimodal_moun[num-3]/35
+                    elif num == 512:
+                        multichannel_unimodal[num] = 69*unimodal_moun[num]/70 + 4*unimodal_moun[num-1]/70 + (-6)*unimodal_moun[num-2]/70 + 4*unimodal_moun[num-3]/70 + (-1)*unimodal_moun[num-4]/70
+                    else:
+                        multichannel_unimodal[num] = (-3)*unimodal_moun[num-2]/35 + 12*unimodal_moun[num-1]/35 + 17*unimodal_moun[num]/35 + 12*unimodal_moun[num+1]/35 + (-3)*unimodal_moun[num+2]/35
+                # 能量均值取加权之前的均值
+                #ave_multi_unimodal = ave_unimodal
+                
+                for num in range(0,513):
+                    ave_multi_power += (num*0.02+0.01) * multichannel_muon[num]
+                for num in range(0,513):
+                    ave_multi_qower += (num*0.02+0.01) * multichannel_elec[num]
+                for num in range(0,513):
+                    ave_multi_unimodal += (num*0.02+0.01) * multichannel_unimodal[num]
                 # 求和
                 for item in distribute_lifetime:
                     num_of_moun += item
@@ -715,6 +707,19 @@ class Analysis(QtCore.QThread):
                     power_of_unimodal += item
                 for item in multichannel_unimodal:
                     multipower_of_unimodal += item
+                
+                window = Tk()
+                window.title("conversion")
+                Label(window,text = "Enter the calibration").grid(row = 1,column = 1)
+                self.numVar = StringVar()
+                Entry(window, textvariable = self.numVar,justify = RIGHT).grid(row = 1,column = 2)
+                self.energyVar = StringVar()
+                Entry(window, textvariable = self.energyVar,justify = RIGHT).grid(row = 2,column = 2)
+                Button(window,text = "Caculate",command = self.changement).grid(row = 1,column = 3)
+                self.changeVar = StringVar()
+                Label(window, textvariable = self.changeVar).grid(row = 1,column = 4)
+                window.mainloop()
+
                 try:
                     ave_time  /= num_of_moun
                     ave_power /= power_of_moun
@@ -745,6 +750,13 @@ class Analysis(QtCore.QThread):
                     self.save_ans.emit('The number of moun is ' + str(num_of_moun) + '\n' + 'The average lifetime is ' + str(ave_time), distribute_lifetime)
                     self.save_pow.emit('The number of moun is ' + str(num_of_moun) + '\n' + 'The average power of moun is ' + str(ave_power), distribute_muon)
                     self.save_qow.emit('The number of elec is ' + str(num_of_moun) + '\n' + 'The average power of elec is ' + str(ave_qower), distribute_elec)
+                    window = Tk()
+                    window.title("conversion")
+                    label = Label(window,text = "Enter the calibration").grid(row = 1,column = 1)
+                    self.lowVar = StringVar()
+                    Entry(window, textvariable = self.lowVar,justify = RIGHT).grid(row = 1,column = 2)
+                    btcomputerChange = Button(window,text = "Caculate",command = self.changement).grid(row = 1,column = 3)
+                    window.mainloop()
                     self.save_multi_pow.emit('The number of moun is ' + str(num_of_moun) + '\n' + 'The average multipower of moun is ' + str(ave_multi_power), multichannel_muon)
                     self.save_multi_qow.emit('The number of elec is ' + str(num_of_moun) + '\n' + 'The average multipower of elec is ' + str(ave_multi_qower), multichannel_elec)
                     self.save_unimodal_pow.emit('The number of unimodal moun is ' + str(num_of_unimodal) + '\n' + 'The average power of unimodal moun is ' + str(ave_unimodal), unimodal_moun)

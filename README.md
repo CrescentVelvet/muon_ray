@@ -28,6 +28,6 @@ Running environment:
         peakutils-1.3.3
         pyinstaller-4.2
     USE:
-	pyinstaller -F -i .\logo.ico .\MainMuonDetector.py
+	pyinstaller -F -i .\logo.jpg .\MainMuonDetector.py
     Tektronix support:
         https://www.tek.com.cn/product-support

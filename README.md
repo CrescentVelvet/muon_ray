@@ -14,7 +14,7 @@ Connect us: crescentvelvet3@gmail.com
 
 Running environment:
 
-    OS: WINDOWS 7; WINDOWS 8; WINDOWS 10.
+    OS: Ubuntu; WINDOWS 7; WINDOWS 8; WINDOWS 10.
     PYTHON: 3.5.0 / 3.5.1
     PYTHON PACKAGES:
         numpy
@@ -25,5 +25,7 @@ Running environment:
         sip
         pyqt5
         scipy
+    USE:
+	pyinstaller -F -i .\logo.ico \MainMuonDetector.py
     Tektronix support:
         https://www.tek.com.cn/product-support

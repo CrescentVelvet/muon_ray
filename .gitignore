@@ -3,3 +3,5 @@
 /dist/
 /__pycache__/
 *.spec
+/libs/oscilloscope/__pycache__/
+/libs/utils/__pycache__/

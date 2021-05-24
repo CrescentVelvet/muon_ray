@@ -1,7 +1,7 @@
 # FPGAmoun
 TEKTRONIX oscilloscope with python
 
-A software for collecting and analyzing decay lifetime and energy of muons from cosmic ray based on TeX oscilloscope
+A software for collecting and analyzing decay lifetime and energy of muons from cosmic ray based on TeX 1012b oscilloscope
 
 <img width=250 src="https://img-blog.csdnimg.cn/20200706234744436.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3dlaXhpbl80NTEyMzI3Ng==,size_16,color_FFFFFF,t_70" alt="oh my god!"/>
 
